@@ -16,7 +16,7 @@ import (
 // Notifier is interface of notification
 type Notifier interface {
 	Notify(state State, s Source) error
-	SendMessage(msg string) error
+	SendMessage(msg string, state State) error
 }
 
 // SlackNotifier handles notification to slack
@@ -60,10 +60,10 @@ func (n *SlackNotifier) Notify(state State, s Source) error {
 		channel = "<!channel|channel> "
 	}
 	msg := fmt.Sprintf("%s%v: %v (%v)", channel, state, s.URL, s.Name)
-	return n.SendMessage(msg)
+	return n.SendMessage(msg, 0)
 }
 
-func (n *SlackNotifier) SendMessage(msg string) error {
+func (n *SlackNotifier) SendMessage(msg string, state State) error {
 	v := url.Values{}
 	v.Set("token", n.tok)
 	v.Set("channel", n.channel)
@@ -120,10 +120,10 @@ func (n *LineNotifier) Notify(state State, s Source) error {
 		return nil
 	}
 	msg := fmt.Sprintf("%v: %v (%v)", state, s.URL, s.Name)
-	return n.SendMessage(msg)
+	return n.SendMessage(msg, 0)
 }
 
-func (n *LineNotifier) SendMessage(msg string) error {
+func (n *LineNotifier) SendMessage(msg string, state State) error {
 	v := url.Values{}
 	v.Set("message", msg)
 
@@ -164,10 +164,16 @@ func NewSlackWebhookNotifier(hc *http.Client, url, channel string) *SlackWebhook
 	}
 }
 
+type slackWebhookWrapper struct {
+	Attachments []slackWebhookRequest `json:"attachments"`
+}
+
 type slackWebhookRequest struct {
 	Channel  string `json:"channel"`
 	Username string `json:"username"`
 	Text     string `json:"text"`
+	Color    string `json:"color"`
+	Title    string `json:"title"`
 }
 
 func (n *SlackWebhookNotifier) Notify(state State, s Source) error {
@@ -190,17 +196,24 @@ func (n *SlackWebhookNotifier) Notify(state State, s Source) error {
 	if state == AVAILABLE {
 		channel = "<!channel|channel> "
 	}
-	msg := fmt.Sprintf("%s%v: %v (%v)", channel, state, s.URL, s.Name)
-	return n.SendMessage(msg)
+	msg := fmt.Sprintf("%s<%v|%v>", channel, s.URL, s.Name)
+	return n.SendMessage(msg, state)
 }
 
-func (n *SlackWebhookNotifier) SendMessage(msg string) error {
-	req := &slackWebhookRequest{
+func (n *SlackWebhookNotifier) SendMessage(msg string, state State) error {
+	req := make([]slackWebhookRequest, 1)
+	req = append(req, slackWebhookRequest{
 		Channel:  n.channel,
 		Username: "switch-checker",
 		Text:     msg,
+		Color:    state.ColorString(),
+		Title:    state.String(),
+	})
+	wrappedReq := &slackWebhookWrapper{
+		Attachments: req,
 	}
-	bs, err := json.Marshal(req)
+
+	bs, err := json.Marshal(wrappedReq)
 	if err != nil {
 		return err
 	}

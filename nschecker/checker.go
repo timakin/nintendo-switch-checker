@@ -27,6 +27,18 @@ const (
 	ERROR
 )
 
+func (s State) ColorString() string {
+	switch s {
+	case SOLDOUT:
+		return "warning"
+	case AVAILABLE:
+		return "good"
+	case ERROR:
+		return "danger"
+	}
+	return ""
+}
+
 func (s State) String() string {
 	switch s {
 	case UNKNOWN:

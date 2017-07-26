@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/haya14busa/nintendo-switch-checker/nschecker"
+	"github.com/itkq/nintendo-switch-checker/nschecker"
 )
 
 var (
@@ -112,7 +112,7 @@ type Checker struct {
 const startupMsg = "Nintendo Switch Checker started"
 
 func (c *Checker) run() error {
-	if err := c.Notifier.SendMessage(startupMsg); err != nil {
+	if err := c.Notifier.SendMessage(startupMsg, 0); err != nil {
 		return fmt.Errorf("failed to send startup msg: %v", err)
 	}
 	if c.Once {

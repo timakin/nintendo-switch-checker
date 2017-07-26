@@ -8,7 +8,7 @@ import (
 
 	"strings"
 
-	"github.com/haya14busa/nintendo-switch-checker/nschecker"
+	"github.com/timakin/nintendo-switch-checker/nschecker"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/log"
